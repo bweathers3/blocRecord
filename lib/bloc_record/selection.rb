@@ -2,6 +2,7 @@
 require 'sqlite3'
 
 module Selection
+
   def find(id)
     row = connection.get_first_row <<-SQL
       SELECT #{columns.join ","} FROM #{table}
@@ -11,4 +12,15 @@ module Selection
     data = Hash[columns.zip(row)]
     new(data)
   end
+
+  def find_by(name, addressbookname)
+    row = connection.get_first_row <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      WHERE #{name} = #{BlocRecord::Utility.sql_strings(addressbookname)};
+    SQL
+
+    data = Hash[columns.zip(row)]
+    new(data)
+  end
+
 end
