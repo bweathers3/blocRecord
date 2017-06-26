@@ -34,6 +34,44 @@ module Selection
     init_object_from_row(row)
   end
 
+  def method_missing(m, *args, &block)
+    if m == :find_by_name
+      find_by(:name, *args[0])
+    end
+    if m == :search
+      find_by(:name, *args[0])
+    end
+    if m == :find_by_batch
+      find_in_batches(:name, *args[0])
+    end
+  end
+
+  def find_each(start_size = {})
+    start = start_size.has_key?(:start) ? start_size[:start] : 0
+		batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
+
+    rows = connection.get_first_row <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      LIMIT batch_size OFFSET start;
+    SQL
+
+    yield(rows_to_array(rows))
+  end
+
+  def find_in_batches(start_size = {})
+    start = start_size.has_key?(:start) ? start_size[:start] : 0
+    batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
+
+    while  i < batches + 1 do
+      rows = connection.get_first_row <<-SQL
+        SELECT #{columns.join ","} FROM #{table}
+        LIMIT batch_size OFFSET start;
+      SQL
+
+      yield(rows_to_array(rows))
+    end
+  end
+
   def take(num=1)
     if num > 1
       rows = connection.execute <<-SQL
