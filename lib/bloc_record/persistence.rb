@@ -1,6 +1,6 @@
-
 require 'sqlite3'
 require 'bloc_record/schema'
+require 'pry'
 
 module Persistence
   def self.included(base)
@@ -31,19 +31,51 @@ module Persistence
 
   module ClassMethods
     def create(attrs)
+
       attrs = BlocRecord::Utility.convert_keys(attrs)
       attrs.delete "id"
-      vals = attributes.map { |key| BlocRecord::Utility.sql_strings(attrs[key]) }
+      #### start validations
+      errors = []
+      attrs.each do |k,v|
+        case k
+        when "name"
+          if  !v || v.nil? || v.empty?
+             errors << "The Name field must be completed!"
+          elsif v.length < 3
+             errors << "Name is too Short!"
+          end
+        when "phone_number"
+          if !v || v.nil? || v.empty?
+            errors << "The Phone Number field must be completed!"
+          elsif v.scan(/[A-Z]|[a-z]/).any?
+            errors << "Phone Number must be only numbers!"
+          end
+        when "email"
+          if !v || v.nil? || v.empty?
+            errors << "The Email field must be completed!"
+          elsif v !~ /[a-z0-9]+[_a-z0-9\.-]*[a-z0-9]+@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})/
+              errors << "The Email entered does not match a normal email, please try again!"
+          end
+        end
+      end
 
-      connection.execute <<-SQL
-        INSERT INTO #{table} (#{attributes.join ","})
-        VALUES (#{vals.join ","});
-      SQL
+      if errors.any?
+        return errors
+        return
+      else
+        ##### end validations
+        vals = attributes.map { |key| BlocRecord::Utility.sql_strings(attrs[key]) }
 
-      data = Hash[attributes.zip attrs.values]
-      data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
-      new(data)
-    end
+        connection.execute <<-SQL
+          INSERT INTO #{table} (#{attributes.join ","})
+          VALUES (#{vals.join ","});
+        SQL
+
+        data = Hash[attributes.zip attrs.values]
+        data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
+        new(data)
+      end
+    end #### added with validations
   end
 
 end

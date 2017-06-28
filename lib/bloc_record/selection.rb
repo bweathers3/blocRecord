@@ -44,6 +44,8 @@ module Selection
     if m == :find_by_batch
       find_in_batches(:name, *args[0])
     end
+
+    throw "Method #{m} not found!!!!"
   end
 
   def find_each(start_size = {})
