@@ -186,6 +186,22 @@ module Selection
      rows_to_array(rows)
    end
 
+   def neshed_join(args)
+     table_2 = args.keys[0]
+     table_3 = args.values[0]
+
+     joins = "INNER JOIN #{table_2} ON #{table_2}.#{table}_id = #{table}.id " +
+             "INNER JOIN #{table_3} ON #{table_3}.#{table_2}_id = #{table_2}.id"
+
+      rows = connection.execute <<-SQL
+        SELECT * FROM #{table}
+        #{joins}
+      SQL
+
+      arr = rows_to_array(rows)
+   end
+
+
 
 private
   def init_object_from_row(row)
