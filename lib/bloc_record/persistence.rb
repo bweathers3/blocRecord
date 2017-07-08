@@ -37,6 +37,20 @@ require 'pry'
       self.class.update(self.id, updates)
     end
 
+    def method_missing(m, *args, &block)
+      if m == :update_name
+        update(:ids, *args[0])
+      end
+      if m == :update_phone_number
+        update(:ids, *args[0])
+      end
+      if m == :update_email
+        update(:ids, *args[0])
+      end
+
+      throw "Method #{m} not found!!!!"
+    end
+
 
   module ClassMethods
 
@@ -87,6 +101,22 @@ require 'pry'
     end #### added with validations
 
     def update(ids, updates)
+
+      if ids.class == Array && updates.class == Array
+        for i in 0...ids.length
+          updates_array = []
+
+          for key in updates.keys
+            updates_array << "#{key}=#{BlocRecord::Utility.sql_strings(updates[key])}"
+          end
+
+          connection.execute <<-SQL
+            UPDATE #{table} SET #{updates_array * ','}
+            WHERE id = #{ids[i]}
+          SQL
+        end
+        return true
+      end
 
       updates = BlocRecord::Utility.convert_keys(updates)
       updates.delete "id"

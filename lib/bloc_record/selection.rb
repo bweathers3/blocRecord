@@ -149,6 +149,11 @@ module Selection
     rows_to_array(rows)
   end
 
+  def not(hash)
+    not_conditions = hash.map {|k,v| "#{k}" + " NOT " + "#{v}"}.join(" AND ")
+    where(not_conditions)
+  end
+
   def order(*args)
     if args.count > 1
       order = args.join(",")
@@ -200,5 +205,5 @@ private
     rows.each { |row| collection << new(Hash[columns.zip(row)]) }
     collection
   end
-  
+
 end
