@@ -129,21 +129,33 @@ require 'pry'
       true
     end
 
-    def destroy_all(conditions_hash=nil)
-      if conditions_hash && !conditions_hash.empty?
-        conditions_hash = BlocRecord::Utility.convert_keys(conditions_hash)
-        conditions = conditions_hash.map {|key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
-
+    def destroy_all(*args)
+      if args.empty?
         connection.execute <<-SQL
+          DELETE FROM #{table}
+        SQL
+        return true
+      end
+
+      if args.count > 1
+        expression = args.shift
+        array_delete = args
+      else
+        case args.first
+        when Hash
+          conditions_hash = BlocRecord::Utility.convert_keys(args.first)
+          conditions = conditions_hash.map {|key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+        when String
+          expression = args.first
+        end
+      end
+
+        sql = <<-SQL
           DELETE FROM #{table}
           WHERE #{conditions};
         SQL
-      else
 
-        connection.execute <<-SQL
-          DELETE FROM #{table}
-        SQL
-      end
+        connection.execute(sql, array_delete)
 
       true
     end
