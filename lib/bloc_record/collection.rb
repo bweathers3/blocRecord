@@ -14,5 +14,9 @@ module BlocRecord
       multi_wheres
     end
 
+    def take(num=1)
+      self[0..num-1]
+    end
+
   end
 end
