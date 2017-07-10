@@ -6,9 +6,9 @@ require 'active_support/inflector'
 
    def has_many(association)
      define_method(association) do
-       rows = self.class.connection.execute <<-SQL
-        SELECT * FROM #{association.to_s.singularize}
-        WHERE #{self.class.table}_id = #{self.id}
+        rows = self.class.connection.execute <<-SQL
+          SELECT * FROM #{association.to_s.singularize}
+          WHERE #{self.class.table}_id = #{self.id}
         SQL
 
         class_name = association.to_s.classify.constantize
@@ -20,6 +20,23 @@ require 'active_support/inflector'
 
         collection
       end
+   end
+
+   def has_one(association)
+     define_method(association) do
+        rows = self.class.connection.execute <<-SQL
+          SELECT * FROM #{association.to_s}
+          WHERE #{self.class.table}_id = #{self.id}
+        SQL
+
+        class_name = association.to_s.classify.constantize
+        if row
+          data_record = Hash[class_name.columns.zip(row)]
+          class_name.new(data_record)
+        end
+
+        collection
+     end
    end
 
    def belongs_to(association)
@@ -38,5 +55,5 @@ require 'active_support/inflector'
        end
      end
    end
-   
+
  end
